@@ -1,0 +1,118 @@
+<div class="dash">
+  <header class="header">
+    <h1>Portfolio Tracker</h1>
+  </header>
+
+  <section class="cards" *ngIf="portfolio() as p">
+    <div class="card">
+      <span class="label">Total Value</span>
+      <span class="val">${{ p.totalValue | number:'1.2-2' }}</span>
+    </div>
+    <div class="card">
+      <span class="label">Total Cost</span>
+      <span class="val">${{ p.totalCost | number:'1.2-2' }}</span>
+    </div>
+    <div class="card" [class.pos]="p.totalPnl >= 0" [class.neg]="p.totalPnl < 0">
+      <span class="label">Total P&L</span>
+      <span class="val">${{ p.totalPnl | number:'1.2-2' }} ({{ p.totalPnlPct | number:'1.2-2' }}%)</span>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="box">
+      <h2>Holdings</h2>
+      <table class="table" *ngIf="portfolio() as p">
+        <thead>
+          <tr>
+            <th>Symbol</th>
+            <th>Shares</th>
+            <th>Buy Price</th>
+            <th>Current</th>
+            <th>Market Val</th>
+            <th>P&L</th>
+            <th>Weight</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let h of p.holdings" (click)="selectTicker(h.symbol)" [class.active-row]="activeTicker() === h.symbol">
+            <td><strong>{{ h.symbol }}</strong></td>
+            <td>{{ h.shares }}</td>
+            <td>${{ h.buyPrice | number:'1.2-2' }}</td>
+            <td>${{ h.currentPrice | number:'1.2-2' }}</td>
+            <td>${{ h.marketValue | number:'1.2-2' }}</td>
+            <td [class.pos]="h.pnl >= 0" [class.neg]="h.pnl < 0">
+              ${{ h.pnl | number:'1.2-2' }} ({{ h.pnlPct | number:'1.2-2' }}%)
+            </td>
+            <td>{{ h.allocationPct | number:'1.2-2' }}%</td>
+            <td>
+              <button class="btn-del" (click)="removeHolding(h.id); $event.stopPropagation()">✕</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <form class="inline-form" (ngSubmit)="saveHolding()">
+        <input [(ngModel)]="newHolding.symbol" name="symbol" placeholder="Symbol (e.g. AAPL)" required />
+        <input [(ngModel)]="newHolding.shares" name="shares" type="number" step="any" placeholder="Shares" required />
+        <input [(ngModel)]="newHolding.buyPrice" name="buyPrice" type="number" step="any" placeholder="Buy Price" required />
+        <button type="submit" class="btn">Add Stock</button>
+      </form>
+    </section>
+
+    <div class="chart-stack">
+      <section class="box">
+        <h2>Portfolio Allocation</h2>
+        <canvas #allocCanvas></canvas>
+      </section>
+
+      <section class="box">
+        <h2>{{ activeTicker() || 'Stock' }} Price History</h2>
+        <canvas #histCanvas></canvas>
+      </section>
+    </div>
+  </div>
+
+  <section class="box">
+    <h2>Price Alerts</h2>
+    <form class="inline-form" (ngSubmit)="saveAlert()">
+      <input [(ngModel)]="newAlert.symbol" name="alertSymbol" placeholder="Symbol" required />
+      <input [(ngModel)]="newAlert.targetPrice" name="targetPrice" type="number" step="any" placeholder="Target Price" required />
+      <select [(ngModel)]="newAlert.direction" name="direction">
+        <option value="ABOVE">Crosses Above</option>
+        <option value="BELOW">Drops Below</option>
+      </select>
+      <input [(ngModel)]="newAlert.email" name="email" type="email" placeholder="Email" required />
+      <button type="submit" class="btn">Set Alert</button>
+    </form>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Symbol</th>
+          <th>Condition</th>
+          <th>Target</th>
+          <th>Email</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let a of alerts()">
+          <td>{{ a.symbol }}</td>
+          <td>{{ a.direction }}</td>
+          <td>${{ a.targetPrice | number:'1.2-2' }}</td>
+          <td>{{ a.email }}</td>
+          <td>
+            <span class="badge" [class.badge-active]="a.active" [class.badge-done]="!a.active">
+              {{ a.active ? 'Active' : 'Triggered' }}
+            </span>
+          </td>
+          <td>
+            <button class="btn-del" (click)="removeAlert(a.id)">✕</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</div>
